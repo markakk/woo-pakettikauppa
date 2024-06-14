@@ -49,7 +49,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks') ) {
       if ( function_exists('woocommerce_store_api_register_endpoint_data') ) {
         woocommerce_store_api_register_endpoint_data(array(
           'endpoint' => \Automattic\WooCommerce\StoreApi\Schemas\V1\CheckoutSchema::IDENTIFIER,
-          'namespace' => str_replace('_', '-', $this->core->prefix),
+          'namespace' => $this->get_identifier(),
           'data_callback' => array($this, 'pk_data_callback'),
           'schema_callback' => array($this, 'pk_schema_callback'),
           'schema_type' => ARRAY_A,
@@ -61,6 +61,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks') ) {
         '__experimental_woocommerce_blocks_add_data_attributes_to_namespace',
         function ( $allowed_namespaces ) {
           $allowed_namespaces[] = 'pakettikauppa';
+          $allowed_namespaces[] = 'posti';
           return $allowed_namespaces;
         },
         10,
@@ -69,9 +70,9 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks') ) {
     }
 
     public function update_block_order_meta($order, $request) {
-      $data = $request['extensions']['wc-pakettikauppa'] ?? array();
+      $data = $request['extensions'][$this->get_identifier()] ?? array();
 
-      $selected_pickup_point = wc_clean($data['pakettikauppa_pickup_point'] ?? '');
+      $selected_pickup_point = wc_clean($data[$this->get_identifier() . '_pickup_point'] ?? '');
 
       if ( ! empty($selected_pickup_point) ) {
         $order->update_meta_data('_' . str_replace('wc_', '', $this->core->prefix) . '_pickup_point', sanitize_text_field($selected_pickup_point));
@@ -90,24 +91,28 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks') ) {
 
     public function register_block_categories( $categories ) {
       return array_merge($categories, array(
-        array( 'slug'  => str_replace('_', '-', $this->core->prefix), 'title' => $this->core->vendor_fullname ),
+        array( 'slug'  => $this->get_identifier(), 'title' => $this->core->vendor_fullname ),
       ));
     }
 
     public function pk_data_callback() {
       return array(
-        'pakettikauppa_pickup_point' => ''
+        $this->get_identifier() . '_pickup_point' => ''
       );
     }
 
     public function pk_schema_callback() {
       return array(
-        'pakettikauppa_pickup_point'  => array(
+        $this->get_identifier() . '_pickup_point'  => array(
           'description' => __('Selected pickup point', 'woo-pakettikauppa'),
           'type'        => array('string', 'null'),
           'readonly'    => true,
         ),
       );
+    }
+
+    private function get_identifier() {
+      return str_replace(' ', '-', strtolower($this->core->vendor_name));
     }
   }
 }

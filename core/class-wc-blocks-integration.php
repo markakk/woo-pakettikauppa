@@ -21,7 +21,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks_Integration') ) {
     /**
      * @var string
      */
-    private $version = '0.0.1';
+    private $version = '1.0.0';
 
     /**
      * @var Core
@@ -44,7 +44,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks_Integration') ) {
     public function __construct( Core $plugin ) {
       $this->core = $plugin;
       $this->shipment = $this->core->shipment;
-      $this->prefix = str_replace('_', '-', $this->core->prefix) . '-';
+      $this->prefix = $this->get_identifier() . '-';
     }
     /**
      * The name of the integration.
@@ -52,7 +52,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks_Integration') ) {
      * @return string
      */
     public function get_name() {
-      return strtolower($this->core->vendor_name) . '-blocks';
+      return $this->prefix . 'blocks';
     }
 
     /**
@@ -118,10 +118,10 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks_Integration') ) {
     }
 
     public function register_additional_actions() {
-      add_action('wp_ajax_pakettikauppa_get_pickup_points', array($this, 'get_pickup_points_callback'));
-      add_action('wp_ajax_nopriv_pakettikauppa_get_pickup_points', array($this, 'get_pickup_points_callback'));
-      add_action('wp_ajax_pakettikauppa_get_custom_pickup_points', array($this, 'get_pickup_points_by_free_input_callback'));
-      add_action('wp_ajax_nopriv_pakettikauppa_get_custom_pickup_points', array($this, 'get_pickup_points_by_free_input_callback'));
+      add_action('wp_ajax_' . $this->get_identifier() . '_get_pickup_points', array($this, 'get_pickup_points_callback'));
+      add_action('wp_ajax_nopriv_' . $this->get_identifier() . '_get_pickup_points', array($this, 'get_pickup_points_callback'));
+      add_action('wp_ajax_' . $this->get_identifier() . '_get_custom_pickup_points', array($this, 'get_pickup_points_by_free_input_callback'));
+      add_action('wp_ajax_nopriv_' . $this->get_identifier() . '_get_custom_pickup_points', array($this, 'get_pickup_points_by_free_input_callback'));
     }
 
     public function get_pickup_points_callback() {
@@ -179,6 +179,10 @@ if ( ! class_exists(__NAMESPACE__ . '\Wc_Blocks_Integration') ) {
         wp_send_json_error('Received pickup points list is empty');
       }
       wp_send_json_success($pickup_points);
+    }
+
+    private function get_identifier() {
+      return str_replace(' ', '-', strtolower($this->core->vendor_name));
     }
 
     private function get_pakettikauppa_methods() {
